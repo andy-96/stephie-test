@@ -133,175 +133,210 @@ def generate_html(data: dict, path: Path):
         </article>
         """
 
+    # Datum gestalterisch: "DO 19 · FEB · 2026"
+    dt = datetime.strptime(data["date"], "%Y-%m-%d")
+    monate = ["JAN","FEB","MÄR","APR","MAI","JUN","JUL","AUG","SEP","OKT","NOV","DEZ"]
+    date_formatted = f"{dt.day:02d} · {monate[dt.month-1]} · {dt.year}"
+    weekday = ["MO","DI","MI","DO","FR","SA","SO"][dt.weekday()]
+
     html = f"""<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>KUCHEN – Nachrichtenzusammenfassung</title>
+    <title>KUCHEN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --coral: #FF6B6B;
-            --turquoise: #00D9C0;
-            --sunny: #FFD93D;
-            --lime: #6BCB77;
-            --tangerine: #FF8C42;
-            --sky: #4ECDC4;
-            --hot-pink: #FF6B9D;
-            --text: #1a1a2e;
-            --text-soft: #4a4a6a;
+            --bg: #A8D8EA;
+            --card: #E84A5F;
+            --card-soft: #FF6B6B;
             --white: #ffffff;
+            --yellow: #FFD93D;
+            --yellow-warm: #F4D03F;
         }}
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         body {{
-            font-family: 'Outfit', -apple-system, sans-serif;
-            background: linear-gradient(135deg, #FFF5E6 0%, #FFE4EC 30%, #E6F9FF 70%, #E8FFF0 100%);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
             min-height: 100vh;
-            color: var(--text);
-            line-height: 1.7;
+            color: var(--white);
+            line-height: 1.6;
             padding: 2rem 1rem 3rem;
+            position: relative;
+            overflow-x: hidden;
         }}
-        .container {{ max-width: 680px; margin: 0 auto; }}
+        .shapes {{
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }}
+        .shape {{
+            position: absolute;
+            background: rgba(255,255,255,0.4);
+            border-radius: 2px;
+        }}
+        .shape.circle {{ border-radius: 50%; }}
+        .shape.tri {{
+            width: 0; height: 0;
+            background: transparent;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 70px solid rgba(255,255,255,0.35);
+        }}
+        .shape.sq {{ border-radius: 4px; }}
+        .shape {{ width: 80px; height: 80px; top: 15%; left: 5%; }}
+        .shape:nth-child(2) {{ width: 120px; height: 120px; top: 60%; right: 8%; left: auto; }}
+        .shape:nth-child(3) {{ width: 50px; height: 50px; top: 35%; right: 15%; left: auto; }}
+        .shape:nth-child(4) {{ width: 100px; height: 100px; bottom: 20%; left: 10%; }}
+        .shape:nth-child(5) {{ width: 60px; height: 60px; top: 80%; right: 25%; left: auto; }}
+        .shape:nth-child(6) {{ width: 140px; height: 140px; top: 10%; right: 5%; left: auto; }}
+        .shape:nth-child(7) {{ width: 45px; height: 45px; top: 50%; left: 3%; }}
+        .shape:nth-child(8) {{ width: 90px; height: 90px; bottom: 10%; right: 10%; left: auto; }}
+        .container {{ max-width: 600px; margin: 0 auto; position: relative; z-index: 1; }}
         header {{
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
         }}
         h1 {{
-            font-size: 3rem;
-            font-weight: 800;
+            font-size: 2.8rem;
+            font-weight: 700;
             margin: 0;
-            background: linear-gradient(135deg, var(--coral), var(--tangerine));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
+            color: var(--white);
+            letter-spacing: -0.03em;
         }}
         .date {{
-            color: var(--text-soft);
-            font-size: 0.95rem;
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            margin-top: 0.5rem;
+            letter-spacing: 0.2em;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
         }}
+        .date span {{ opacity: 0.7; font-weight: 400; }}
         .headline {{
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            margin-bottom: 0.75rem;
-            box-shadow: 0 4px 24px rgba(255,107,107,0.08), 0 2px 8px rgba(0,0,0,0.04);
+            background: linear-gradient(135deg, var(--card) 0%, var(--card-soft) 100%);
+            border-radius: 12px;
+            margin-bottom: 0.6rem;
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 20px rgba(232,74,95,0.25);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }}
         .headline:hover {{
-            transform: translateY(-1px);
-            box-shadow: 0 8px 32px rgba(255,107,107,0.12), 0 4px 12px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(232,74,95,0.35);
         }}
         .headline-btn {{
             width: 100%;
             text-align: left;
-            padding: 1.25rem 1.5rem;
+            padding: 1.2rem 1.5rem;
             border: none;
             background: transparent;
             cursor: pointer;
             font-family: inherit;
             font-size: 1rem;
+            color: var(--white);
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.3rem;
             position: relative;
             padding-right: 3rem;
             transition: background 0.2s ease;
         }}
-        .headline-btn:hover {{ background: rgba(255,107,107,0.04); }}
+        .headline-btn:hover {{ background: rgba(255,255,255,0.08); }}
         .headline h2 {{
             margin: 0;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             line-height: 1.45;
-            color: var(--text);
+            color: var(--white);
         }}
         .source {{
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.7rem;
+            font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            background: linear-gradient(90deg, var(--coral), var(--tangerine));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.85);
         }}
         .expand {{
             position: absolute;
             right: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--turquoise), var(--sky));
+            background: rgba(255,255,255,0.25);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 700;
             transition: transform 0.3s ease, background 0.2s ease;
         }}
-        .headline-btn:hover .expand {{ background: linear-gradient(135deg, var(--coral), var(--hot-pink)); }}
-        .headline.expanded .expand {{ transform: translateY(-50%) rotate(180deg); }}
+        .headline-btn:hover .expand {{ background: rgba(255,255,255,0.4); }}
+        .headline.expanded .expand {{ transform: translateY(-50%) rotate(180deg); background: rgba(255,255,255,0.4); }}
         .summary {{
             display: none;
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid rgba(78,205,196,0.2);
-            background: linear-gradient(180deg, rgba(78,205,196,0.03) 0%, transparent 100%);
+            padding: 0 1.5rem 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.08);
         }}
         .headline.expanded .summary {{ display: block; animation: slideDown 0.3s ease; }}
-        @keyframes slideDown {{
-            from {{ opacity: 0; }}
-            to {{ opacity: 1; }}
-        }}
+        @keyframes slideDown {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
         .summary-text {{
             padding-top: 1rem;
-            font-size: 0.95rem;
-            color: var(--text-soft);
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.95);
             white-space: pre-wrap;
+            font-weight: 400;
+            line-height: 1.65;
         }}
         .summary-text br {{ display: block; content: ""; margin-top: 0.5em; }}
         .summary a {{
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            margin-top: 1rem;
-            padding: 0.5rem 0;
-            color: var(--coral);
+            display: inline-block;
+            margin-top: 0.75rem;
+            color: var(--yellow-warm);
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: color 0.2s ease, gap 0.2s ease;
-        }}
-        .summary a:hover {{ color: var(--tangerine); gap: 0.5rem; }}
-        footer {{
-            margin-top: 2.5rem;
-            text-align: center;
             font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }}
+        .summary a:hover {{ text-decoration: underline; }}
+        footer {{
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
             font-weight: 500;
-            color: var(--text-soft);
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.1em;
         }}
     </style>
 </head>
 <body>
+    <div class="shapes">
+        <div class="shape circle"></div>
+        <div class="shape circle"></div>
+        <div class="shape circle"></div>
+        <div class="shape circle"></div>
+        <div class="shape sq"></div>
+        <div class="shape sq"></div>
+        <div class="shape sq"></div>
+        <div class="shape sq"></div>
+    </div>
     <div class="container">
         <header>
-            <h1>🍰 KUCHEN</h1>
-            <p class="date">Nachrichtenzusammenfassung · {data['date']}</p>
+            <h1>KUCHEN</h1>
+            <p class="date">{weekday} &nbsp; {date_formatted}</p>
         </header>
         <main>
             {headlines_html}
         </main>
-        <footer>Täglich um 7 Uhr · KUCHEN</footer>
+        <footer>Täglich um 7 Uhr</footer>
     </div>
     <script>
         function toggleSummary(id) {{

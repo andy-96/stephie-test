@@ -139,46 +139,65 @@ def generate_html(data: dict, path: Path):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>KUCHEN – Nachrichtenzusammenfassung</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg: #faf8f5;
-            --text: #1a1a1a;
-            --accent: #c45c26;
-            --card: #fff;
-            --muted: #6b6b6b;
+            --coral: #FF6B6B;
+            --turquoise: #00D9C0;
+            --sunny: #FFD93D;
+            --lime: #6BCB77;
+            --tangerine: #FF8C42;
+            --sky: #4ECDC4;
+            --hot-pink: #FF6B9D;
+            --text: #1a1a2e;
+            --text-soft: #4a4a6a;
+            --white: #ffffff;
         }}
-        * {{ box-sizing: border-box; }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         body {{
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: var(--bg);
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #FFF5E6 0%, #FFE4EC 30%, #E6F9FF 70%, #E8FFF0 100%);
+            min-height: 100vh;
             color: var(--text);
-            margin: 0;
-            padding: 2rem;
-            line-height: 1.6;
+            line-height: 1.7;
+            padding: 2rem 1rem 3rem;
         }}
-        .container {{ max-width: 720px; margin: 0 auto; }}
+        .container {{ max-width: 680px; margin: 0 auto; }}
         header {{
             text-align: center;
             margin-bottom: 2.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 2px solid var(--accent);
         }}
         h1 {{
-            font-size: 2.5rem;
+            font-size: 3rem;
+            font-weight: 800;
             margin: 0;
-            color: var(--accent);
+            background: linear-gradient(135deg, var(--coral), var(--tangerine));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
         }}
         .date {{
-            color: var(--muted);
+            color: var(--text-soft);
             font-size: 0.95rem;
+            font-weight: 500;
             margin-top: 0.5rem;
         }}
         .headline {{
-            background: var(--card);
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 24px rgba(255,107,107,0.08), 0 2px 8px rgba(0,0,0,0.04);
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.8);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }}
+        .headline:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 8px 32px rgba(255,107,107,0.12), 0 4px 12px rgba(0,0,0,0.06);
         }}
         .headline-btn {{
             width: 100%;
@@ -191,56 +210,86 @@ def generate_html(data: dict, path: Path):
             font-size: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.35rem;
+            position: relative;
+            padding-right: 3rem;
+            transition: background 0.2s ease;
         }}
-        .headline-btn:hover {{ background: #f5f2ef; }}
+        .headline-btn:hover {{ background: rgba(255,107,107,0.04); }}
         .headline h2 {{
             margin: 0;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            line-height: 1.4;
+            line-height: 1.45;
+            color: var(--text);
         }}
         .source {{
-            font-size: 0.8rem;
-            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.12em;
+            background: linear-gradient(90deg, var(--coral), var(--tangerine));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }}
         .expand {{
             position: absolute;
-            right: 1rem;
+            right: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.7rem;
-            color: var(--muted);
-            transition: transform 0.2s;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--turquoise), var(--sky));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 700;
+            transition: transform 0.3s ease, background 0.2s ease;
         }}
-        .headline-btn {{
-            position: relative;
-            padding-right: 2.5rem;
-        }}
+        .headline-btn:hover .expand {{ background: linear-gradient(135deg, var(--coral), var(--hot-pink)); }}
         .headline.expanded .expand {{ transform: translateY(-50%) rotate(180deg); }}
         .summary {{
             display: none;
             padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid #eee;
+            border-top: 1px solid rgba(78,205,196,0.2);
+            background: linear-gradient(180deg, rgba(78,205,196,0.03) 0%, transparent 100%);
         }}
-        .headline.expanded .summary {{ display: block; }}
+        .headline.expanded .summary {{ display: block; animation: slideDown 0.3s ease; }}
+        @keyframes slideDown {{
+            from {{ opacity: 0; }}
+            to {{ opacity: 1; }}
+        }}
         .summary-text {{
             padding-top: 1rem;
             font-size: 0.95rem;
-            color: #333;
+            color: var(--text-soft);
             white-space: pre-wrap;
         }}
         .summary-text br {{ display: block; content: ""; margin-top: 0.5em; }}
         .summary a {{
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
             margin-top: 1rem;
-            color: var(--accent);
+            padding: 0.5rem 0;
+            color: var(--coral);
             text-decoration: none;
             font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s ease, gap 0.2s ease;
         }}
-        .summary a:hover {{ text-decoration: underline; }}
+        .summary a:hover {{ color: var(--tangerine); gap: 0.5rem; }}
+        footer {{
+            margin-top: 2.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-soft);
+        }}
     </style>
 </head>
 <body>
@@ -252,14 +301,11 @@ def generate_html(data: dict, path: Path):
         <main>
             {headlines_html}
         </main>
-        <footer style="margin-top: 2rem; text-align: center; color: var(--muted); font-size: 0.85rem;">
-            Täglich um 7 Uhr · KUCHEN
-        </footer>
+        <footer>Täglich um 7 Uhr · KUCHEN</footer>
     </div>
     <script>
         function toggleSummary(id) {{
-            const el = document.querySelector('[data-id="' + id + '"]');
-            el.classList.toggle('expanded');
+            document.querySelector('[data-id="' + id + '"]').classList.toggle('expanded');
         }}
     </script>
 </body>

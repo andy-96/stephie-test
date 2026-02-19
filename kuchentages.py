@@ -18,7 +18,7 @@ except ImportError:
 from datetime import datetime
 
 from config import NEWS_SOURCES, HEADLINES_COUNT
-from news_fetcher import fetch_articles
+from news_fetcher import fetch_articles, fetch_article_content
 from summarizer import summarize_article
 
 
@@ -71,25 +71,34 @@ def run_kuchentages():
     for i, art in enumerate(headlines, 1):
         print(f"   [{i}/{len(headlines)}] {art['source']}: {art['title'][:50]}...")
 
-        if api_key:
-            summary = summarize_article(
-                art["title"],
-                art["source"],
-                art["content"] or art["summary_rss"],
-                art["language"],
-            )
+        # Vollständigen Artikeltext extrahieren
+        full_text = fetch_article_content(art["url"])
+        has_full_text = len(full_text.strip()) > 500
+
+        if has_full_text:
+            display_text = full_text
+            print(f"      → Volltext geladen ({len(full_text)} Zeichen)")
         else:
-            summary = (
-                art["summary_rss"]
-                or "Kein Inhalt verfügbar. Bitte OPENAI_API_KEY setzen für AI-Zusammenfassungen."
-            )
+            # Fallback: AI-Zusammenfassung oder RSS-Teaser
+            if api_key:
+                display_text = summarize_article(
+                    art["title"],
+                    art["source"],
+                    art["content"] or art["summary_rss"],
+                    art["language"],
+                )
+            else:
+                display_text = (
+                    art["summary_rss"]
+                    or "Kein vollständiger Inhalt verfügbar. Bitte Originalartikel lesen."
+                )
 
         results.append({
             "id": art["id"],
             "title": art["title"],
             "source": art["source"],
             "url": art["url"],
-            "summary": summary,
+            "summary": display_text,
         })
 
     # Speichern

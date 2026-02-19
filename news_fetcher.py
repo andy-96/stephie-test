@@ -31,7 +31,7 @@ def clean_html(text: str) -> str:
     return text.strip()
 
 
-def fetch_article_content(url: str) -> str:
+def fetch_article_content(url: str, max_chars: int = 50000) -> str:
     """Versucht, den vollen Artikelinhalt von einer URL zu extrahieren."""
     try:
         headers = {"User-Agent": USER_AGENT}
@@ -40,8 +40,8 @@ def fetch_article_content(url: str) -> str:
 
         if HAS_TRAFILATURA:
             content = trafilatura.extract(response.text)
-            if content:
-                return content[:8000]  # Begrenzen für API
+            if content and len(content.strip()) > 100:
+                return content[:max_chars]
 
         return ""
     except Exception:
@@ -78,16 +78,14 @@ def fetch_articles() -> list[dict]:
                 elif hasattr(entry, "description"):
                     summary_rss = clean_html(entry.description)
 
-                # Optionale Inhalts-Extraktion (kann langsam sein)
-                full_content = fetch_article_content(link) if len(summary_rss) < 200 else ""
-
+                # Keine Extraktion beim initialen Fetch (zu langsam) – wird später für die Top 10 gemacht
                 article = {
                     "id": hashlib.md5(f"{link}{title}".encode()).hexdigest()[:12],
                     "title": title,
                     "source": source_name,
                     "url": link,
                     "summary_rss": summary_rss,
-                    "content": full_content or summary_rss,
+                    "content": summary_rss,
                     "published": published,
                     "language": lang,
                 }
